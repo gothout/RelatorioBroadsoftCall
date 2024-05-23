@@ -45,6 +45,13 @@ sudo mv chromedriver /usr/local/bin/
 git clone https://github.com/seu-usuario/nome-do-repositorio.git
 ```
 
+### 2.1 Login na sua conta Broadsoft
+```
+No arquivo webscraping_ligações.py, modifique as linhas:
+35: campo_usuario.send_keys('INFORME SEU USUARIO DE LOGIN NO BROADSOFT XSP(AS)')
+36: campo_senha.send_keys('INFORME SUA SENHA DE USUARIO DE LOGIN NO BROADSOFT XSP(AS)')
+```
+
 ### 4. Arquivos do Projeto
  - /app.py: Arquivo principal que configura o servidor Flask e gerencia as rotas para iniciar os processos de webscraping, visualizar os job IDs, acessar os logs e baixar os relatórios.
  - /webscraping_ligacoes.py: Script que realiza o webscraping dos dados de ligações de usuários do PBX Broadsoft usando Selenium.
