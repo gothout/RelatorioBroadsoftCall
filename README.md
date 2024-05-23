@@ -19,6 +19,7 @@ Este projeto realiza webscraping de dados de ultimas ligações de usuários do 
   - Flask
   - Flask-SocketIO
   - Selenium
+- **Webdriver Chrome**: Verificar o disponivel no momento https://developer.chrome.com/docs/chromedriver/downloads/version-selection?hl=pt-br.
 
 ## Instalação
 
