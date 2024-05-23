@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Ligações</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-9aIt9G1Hg8KHwrMIoV1DK98pymcFJf8+DPO8yHmUmzL3ZVvpC8ftpu3OnhwL5JqP" crossorigin="anonymous">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+            margin: 0;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form, ul, #log-container {
+            background: #fff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            background: #28a745;
+            border: none;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background: #218838;
+        }
+        #job-ids {
+            list-style-type: none;
+            padding: 0;
+        }
+        #job-ids li {
+            padding: 10px;
+            background: #eee;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #job-ids li span {
+            font-size: 0.9em;
+            color: #666;
+        }
+        #job-ids li button {
+            padding: 5px 10px;
+            background: #007bff;
+            border: none;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #job-ids li button:hover {
+            background: #0056b3;
+        }
+        .fa-download {
+            margin-left: 10px;
+        }
+        #log-container {
+            overflow: auto;
+            max-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1><i class="fas fa-phone-alt"></i> Relatório de Ligações</h1>
+    <p id="message"></p>
+    <form id="submit-form">
+        <label for="emails"><i class="fas fa-envelope"></i> Insira os e-mails (separados por vírgula):</label><br>
+        <input type="text" id="emails" name="emails"><br><br>
+        <input type="submit" value="Enviar">
+    </form>
+
+    <h2><i class="fas fa-list"></i> Job IDs</h2>
+    <ul id="job-ids"></ul>
+
+    <h2><i class="fas fa-history"></i> Log Viewer</h2>
+    <div id="log-container">Nenhum log disponível.</div>
+
+    <h2><i class="fas fa-search"></i> View Log by Job ID</h2>
+    <form id="log-form">
+        <label for="job-id"><i class="fas fa-id-badge"></i> Insira o Job ID:</label><br>
+        <input type="text" id="job-id" name="job-id"><br><br>
+        <input type="submit" value="Ver Log">
+    </form>
+
+    <script>
+        const socket = io();
+        let currentJobId = null;
+    
+        socket.on('connect', function() {
+            // Atualizar a lista de job IDs quando conectar
+            fetchJobIds();
+        });
+    
+        socket.on('update_job_ids', function(data) {
+            updateJobIds(data.job_ids);
+        });
+    
+        socket.on('update_log', function(data) {
+            let formattedLog = data.log_content.replace(/\n/g, "<br>");
+            document.getElementById('log-container').innerHTML = formattedLog;
+        });
+    
+        function fetchJobIds() {
+            fetch('/job_ids')
+                .then(response => response.json())
+                .then(data => {
+                    updateJobIds(data.job_ids);
+                });
+        }
+    
+        function updateJobIds(jobIds) {
+            const jobIdsList = document.getElementById('job-ids');
+            jobIdsList.innerHTML = '';
+            jobIds.forEach(job => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    ${job.job_id} <span>(${job.created_at})</span>
+                    <button onclick="downloadFile('${job.job_id}')">Download <i class="fas fa-download"></i></button>
+                `;
+                jobIdsList.appendChild(li);
+            });
+        }
+    
+        document.getElementById('submit-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+    
+            const formData = new FormData(this);
+            fetch('/submit', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(message => {
+                document.getElementById('message').textContent = message;
+                currentJobId = null;  // Resetar currentJobId após novo submit
+                document.getElementById('log-container').innerHTML = 'Nenhum log disponível.';
+                // Atualizar a lista de job IDs após submissão bem-sucedida
+                fetchJobIds();
+            });
+        });
+    
+        document.getElementById('log-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+    
+            if (currentJobId) {
+                socket.emit('leave_job', {job_id: currentJobId});
+            }
+    
+            currentJobId = document.getElementById('job-id').value;
+            socket.emit('join_job', {job_id: currentJobId});
+    
+            fetch(`/log/${currentJobId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let formattedLog = data.log_content.replace(/\n/g, "<br>");
+                    document.getElementById('log-container').innerHTML = formattedLog;
+                });
+        });
+    
+        function downloadFile(jobId) {
+            window.location.href = `/download/${jobId}`;
+        }
+    </script>
+    
+    
+</body>
+</html>
