@@ -42,7 +42,7 @@ sudo mv chromedriver /usr/local/bin/
 
 ### 2. Download do projeto do Github
 ```
-git clone https://github.com/seu-usuario/nome-do-repositorio.git](https://github.com/gothout/RelatorioBroadsoftCall.git
+git clone https://github.com/gothout/RelatorioBroadsoftCall.git
 ```
 
 ### 2.1 Login na sua conta Broadsoft
