@@ -29,9 +29,6 @@ Instale as dependências necessárias:
 ```bash
 sudo yum update
 sudo yum install -y python36 python36-pip
-sudo pip3 install virtualenv
-virtualenv venv
-source venv/bin/activate
 pip install flask flask-socketio selenium
 ```
 
